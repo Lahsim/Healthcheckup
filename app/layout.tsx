@@ -10,7 +10,7 @@ const nunito = Nunito({
 
 export const metadata: Metadata = {
   title: "🌸 Health Check-In | Your Wellness Bestie",
-  description: "A cute & fun weekly health check-in form. Track meals, vitamins, sleep, energy, and more! care",
+  description: "A cute & fun daily health check-in form by Mish. Track meals, vitamins, sleep, energy, and more!",
 };
 
 export const viewport: Viewport = {

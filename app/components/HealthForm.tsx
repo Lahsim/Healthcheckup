@@ -120,7 +120,7 @@ ${vibeComment ? `💬 "${vibeComment}"` : ''}
 ${suggestions || 'No suggestions provided'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Made with care by Health Check-In
+Made with care by Mish · Health Check-In
     `.trim();
   };
 
@@ -329,7 +329,7 @@ Made with care by Health Check-In
             ✨ Because you matter! ✨
           </p>
           <p className="text-sm mt-1" style={{ color: '#fb7185' }}>
-            Let&apos;s see how you&apos;re really doing, care
+            Let&apos;s see how you&apos;re really doing 🌸
           </p>
           <div className="mt-3 flex justify-center gap-3 text-2xl">
             🍓 💊 💧 😴 🏃‍♀️
@@ -680,7 +680,7 @@ Made with care by Health Check-In
 
 
         <p className="text-center text-xs mt-6 mb-8" style={{ color: '#f9a8d4' }}>
-          Made with care for your wellness journey · Health Check-In 🌸
+          Made with care by Mish · Health Check-In 🌸
         </p>
       </div>
     </div>
