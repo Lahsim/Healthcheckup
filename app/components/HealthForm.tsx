@@ -37,13 +37,13 @@ export default function HealthForm() {
     const missed = all.filter(m => !eatenMeals.includes(m));
     if (missed.length === 0) return null;
     const missedLabels = missed.map(m => MEALS_TODAY.find(x => x.id === m)!.label);
-    if (missed.length === 4) return { color: 'rose' as const, text: '😱 You haven\'t eaten anything today?! Please grab something to eat right now! 💕' };
+    if (missed.length === 4) return { color: 'rose' as const, text: '😱 You haven\'t eaten anything today?! Please grab something to eat right now! care' };
     if (missed.includes('breakfast') && missed.includes('lunch')) return { color: 'rose' as const, text: `😬 Skipping both breakfast and lunch? Your metabolism is crying! Don't forget ${missedLabels.join(' & ')}!` };
     if (missed.includes('breakfast')) return { color: 'rose' as const, text: '🍳 No breakfast?! Your brain runs on fuel — even a banana counts! 🍌' };
     if (missed.includes('lunch')) return { color: 'rose' as const, text: '🥗 Skipped lunch, huh? The afternoon slump hits different without it! 😵' };
     if (missed.includes('dinner')) return { color: 'rose' as const, text: '🍽️ No dinner yet? Go eat something warm and yummy, you deserve it! 🥰' };
     if (missed.includes('snack')) return { color: 'blue' as const, text: '🍎 No snack today — totally fine! But a little treat never hurt anyone 😉' };
-    return { color: 'rose' as const, text: `😬 Missed: ${missedLabels.join(', ')}. Please take care of yourself! 💕` };
+    return { color: 'rose' as const, text: `😬 Missed: ${missedLabels.join(', ')}. Please take care of yourself! care` };
   };
 
   const buildEmailBody = () => {
@@ -120,7 +120,7 @@ ${vibeComment ? `💬 "${vibeComment}"` : ''}
 ${suggestions || 'No suggestions provided'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Made with 💕 by Health Check-In
+Made with care by Health Check-In
     `.trim();
   };
 
@@ -174,7 +174,7 @@ Made with 💕 by Health Check-In
           {
             from_name: 'Health Check-In 🌸',
             reply_to: 'no-reply@healthcheckin.app',
-            message: `Hi ${name || 'there'}! 💕 Here's your health check-in summary:\n\n` + buildEmailBody(),
+            message: `Hi ${name || 'there'}! Here's your health check-in summary with care:\n\n` + buildEmailBody(),
             user_email: email.trim(),
           },
           publicKey
@@ -241,9 +241,9 @@ Made with 💕 by Health Check-In
       score >= 8   ? 'Crushing it! Your body is so proud of you! 💪' :
       score >= 7   ? 'Really solid day! Small wins add up! 🌟' :
       score >= 6   ? 'Not bad at all! Tomorrow is another chance! 🌸' :
-      score >= 5   ? 'Getting there! Every healthy choice counts! 💕' :
+      score >= 5   ? 'Getting there! Every healthy choice counts! care' :
       score >= 4   ? 'Room to grow — but you showed up! That matters! 🌱' :
-                     'Be gentle with yourself. Tomorrow is a fresh start! 🤍';
+                     'Be gentle with yourself. Tomorrow is a fresh start! care';
     const scoreItems = [
       { label: '🍽️ Meals', val: `${eatenMeals.length}/4 eaten`, pts: (eatenMeals.length * 0.5).toFixed(1), max: '2.0' },
       { label: '💊 Vitamins', val: noVitamins ? 'No vitamins' : vitaminsTaken ? 'All taken' : 'Forgot', pts: noVitamins || vitaminsTaken ? '1.0' : '0.0', max: '1.0' },
@@ -296,7 +296,7 @@ Made with 💕 by Health Check-In
             {emailError ? (
               <p className="text-xs font-bold" style={{ color: '#f97316' }}>{emailError}</p>
             ) : email.trim() ? (
-              <p className="text-xs font-bold" style={{ color: '#34d399' }}>✅ A copy of your results was sent to {email}! 💌</p>
+              <p className="text-xs font-bold" style={{ color: '#34d399' }}>✅ A copy of your results was sent to {email}! care</p>
             ) : (
               <p className="text-xs font-bold" style={{ color: '#94a3b8' }}>💡 No email provided — your results are shown above only!</p>
             )}
@@ -329,7 +329,7 @@ Made with 💕 by Health Check-In
             ✨ Because you matter! ✨
           </p>
           <p className="text-sm mt-1" style={{ color: '#fb7185' }}>
-            Let&apos;s see how you&apos;re really doing 💕
+            Let&apos;s see how you&apos;re really doing, care
           </p>
           <div className="mt-3 flex justify-center gap-3 text-2xl">
             🍓 💊 💧 😴 🏃‍♀️
@@ -355,7 +355,7 @@ Made with 💕 by Health Check-In
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="your@email.com 💌 (optional)"
+                  placeholder="your@email.com (optional)"
                 />
               </Field>
             </div>
@@ -496,7 +496,7 @@ Made with 💕 by Health Check-In
               if (waterUnit === 'glasses') {
                 if (waterGlasses <= 2) return <Hint color="rose">🏜️ Your pee is probably the colour of apple juice rn. DRINK. WATER. NOW!! 🧃</Hint>;
                 if (waterGlasses <= 4) return <Hint color="rose">😬 Mild yellow pee alert! You can do better! Chug chug chug! 💦</Hint>;
-                if (waterGlasses <= 6) return <Hint color="blue">💛 Getting there! Your pee is probably pale yellow — not bad! Keep sipping! 🥛</Hint>;
+                if (waterGlasses <= 6) return <Hint color="blue">Getting there! Your pee is probably pale yellow — not bad! Keep sipping! 🥛</Hint>;
                 if (waterGlasses <= 8) return <Hint color="blue">� Crystal clear pee incoming! A hydrated legend! 👑</Hint>;
                 return <Hint color="blue">🚽 You&apos;re basically living in the bathroom at this point… and we RESPECT it! �</Hint>;
               } else {
@@ -636,7 +636,7 @@ Made with 💕 by Health Check-In
                 placeholder={mood === 'Thriving' ? "Tell us everything!! What\'s going so well? 🤩" :
                              mood === 'Good'     ? "What\'s making today a good one? 😊" :
                              mood === 'Meh'      ? "Meh days are valid. What\'s making it feel blah? 🦥" :
-                             mood === 'Struggling' ? "Hey, it\'s okay to struggle. What\'s going on? We\'re listening 💕" :
+                             mood === 'Struggling' ? "Hey, it\'s okay to struggle. What\'s going on? We\'re listening, care" :
                              mood === 'Rough day'  ? "Sending you the biggest virtual hug. What happened? 🥺" :
                              "Pick a vibe above first, then tell us more! 👆"}
                 rows={3}
@@ -651,7 +651,7 @@ Made with 💕 by Health Check-In
             <textarea
               value={suggestions}
               onChange={e => setSuggestions(e.target.value)}
-              placeholder={"e.g. 'Add a stress level question!' or 'Track period symptoms too!' 🩷"}
+              placeholder={"e.g. 'Add a stress level question!' or 'Track period symptoms too!'"}
               rows={4}
               className="w-full rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none border-2"
               style={{ background: '#fff5f7', color: '#db2777', borderColor: '#fbcfe8', fontFamily: 'var(--font-nunito), Nunito, sans-serif' }}
@@ -673,14 +673,14 @@ Made with 💕 by Health Check-In
             className="w-full py-4 rounded-3xl font-black text-xl text-white shadow-lg transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ background: sending ? '#f9a8d4' : 'linear-gradient(135deg, #f472b6, #fb7185, #c084fc)' }}
           >
-            {sending ? '💌 Sending your report…' : '✨ Submit My Health Check-In! 🌸'}
+            {sending ? '✨ Sending your report…' : '✨ Submit My Health Check-In! 🌸'}
           </button>
 
         </form>
 
 
         <p className="text-center text-xs mt-6 mb-8" style={{ color: '#f9a8d4' }}>
-          Made with 💕 for your wellness journey · Health Check-In 🌸
+          Made with care for your wellness journey · Health Check-In 🌸
         </p>
       </div>
     </div>
