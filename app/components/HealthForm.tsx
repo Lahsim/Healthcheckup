@@ -130,7 +130,6 @@ Made with 💕 by Health Check-In
     setEmailError('');
 
     if (!name.trim()) { setValidationError('Please enter your name 🌸'); return; }
-    if (!email.trim()) { setValidationError('Please enter your email so we can send your report! 💌'); return; }
     if (!noVitamins && !dailyVitamins.trim()) { setValidationError('Please list your daily vitamins or select "No vitamins" 💊'); return; }
     if (!noVitamins && vitaminsTaken === null) { setValidationError('Please tell us if you took your vitamins today! 💊'); return; }
     if (waterGlasses === null) { setValidationError('Please pick your daily water intake 💧'); return; }
@@ -155,6 +154,7 @@ Made with 💕 by Health Check-In
     }
 
     try {
+      // Always send to admin
       await emailjs.send(
         serviceId,
         templateId,
@@ -166,6 +166,20 @@ Made with 💕 by Health Check-In
         },
         publicKey
       );
+      // Also send a copy to the user if they provided an email
+      if (email.trim()) {
+        await emailjs.send(
+          serviceId,
+          templateId,
+          {
+            from_name: 'Health Check-In 🌸',
+            reply_to: 'no-reply@healthcheckin.app',
+            message: `Hi ${name || 'there'}! 💕 Here's your health check-in summary:\n\n` + buildEmailBody(),
+            user_email: email.trim(),
+          },
+          publicKey
+        );
+      }
       setSubmitted(true);
     } catch {
       setEmailError('😬 Oops! Email failed to send. Please check your EmailJS config!');
@@ -175,28 +189,122 @@ Made with 💕 by Health Check-In
     }
   };
 
+  const calculateScore = () => {
+    let score = 0;
+    // Meals: up to 2pts (0.5 per meal)
+    score += eatenMeals.length * 0.5;
+    // Vitamins: 1pt
+    if (noVitamins) score += 1;
+    else if (vitaminsTaken === true) score += 1;
+    else if (vitaminsTaken === false) score += 0;
+    // Hydration: up to 1pt
+    if (waterGlasses !== null) {
+      if (waterUnit === 'glasses') score += waterGlasses >= 8 ? 1 : waterGlasses >= 5 ? 0.5 : 0;
+      else score += waterGlasses >= 7 ? 1 : waterGlasses >= 4 ? 0.5 : 0; // litres val 7 = 3+L
+    }
+    // Sleep: up to 2pts
+    if (sleepHours !== null) {
+      if (sleepHours >= 8) score += 2;
+      else if (sleepHours === 7) score += 1.5;
+      else if (sleepHours === 6) score += 1;
+      else if (sleepHours === 5) score += 0.5;
+    }
+    // Exercise: up to 2pts
+    if (exerciseMins !== null) {
+      if (exerciseMins >= 60) score += 2;
+      else if (exerciseMins >= 30) score += 1.5;
+      else if (exerciseMins >= 15) score += 1;
+      else score += 0.5; // rest day still gets a little credit
+    }
+    // Tiredness (inverse): up to 1pt
+    if (tiredness !== null) {
+      if (tiredness <= 3) score += 1;
+      else if (tiredness <= 6) score += 0.5;
+    }
+    // Mood: up to 1pt
+    if (mood === 'Thriving') score += 1;
+    else if (mood === 'Good') score += 0.75;
+    else if (mood === 'Meh') score += 0.5;
+    else if (mood === 'Struggling' || mood === 'Rough day') score += 0.25;
+    return Math.min(10, Math.round(score * 10) / 10);
+  };
+
   if (submitted) {
+    const score = calculateScore();
+    const medal = score >= 8.5 ? 'gold' : score >= 6.5 ? 'silver' : score >= 4.5 ? 'bronze' : 'none';
+    const medalEmoji = medal === 'gold' ? '🥇' : medal === 'silver' ? '🥈' : medal === 'bronze' ? '🥉' : '💪';
+    const medalLabel = medal === 'gold' ? 'Gold Star!' : medal === 'silver' ? 'Silver Star!' : medal === 'bronze' ? 'Bronze Star!' : 'Keep Going!';
+    const medalColor = medal === 'gold' ? '#f59e0b' : medal === 'silver' ? '#94a3b8' : medal === 'bronze' ? '#b45309' : '#ec4899';
+    const medalBg = medal === 'gold' ? '#fffbeb' : medal === 'silver' ? '#f1f5f9' : medal === 'bronze' ? '#fef3c7' : '#fff5f7';
+    const scoreMsg =
+      score >= 9   ? 'You are an absolute health LEGEND today! 🏆' :
+      score >= 8   ? 'Crushing it! Your body is so proud of you! 💪' :
+      score >= 7   ? 'Really solid day! Small wins add up! 🌟' :
+      score >= 6   ? 'Not bad at all! Tomorrow is another chance! 🌸' :
+      score >= 5   ? 'Getting there! Every healthy choice counts! 💕' :
+      score >= 4   ? 'Room to grow — but you showed up! That matters! 🌱' :
+                     'Be gentle with yourself. Tomorrow is a fresh start! 🤍';
+    const scoreItems = [
+      { label: '🍽️ Meals', val: `${eatenMeals.length}/4 eaten`, pts: (eatenMeals.length * 0.5).toFixed(1), max: '2.0' },
+      { label: '💊 Vitamins', val: noVitamins ? 'No vitamins' : vitaminsTaken ? 'All taken' : 'Forgot', pts: noVitamins || vitaminsTaken ? '1.0' : '0.0', max: '1.0' },
+      { label: '💧 Hydration', val: waterGlasses !== null ? `${waterGlasses >= 9 ? '8+' : waterGlasses} ${waterUnit}` : '—', pts: waterGlasses !== null ? (waterUnit === 'glasses' ? (waterGlasses >= 8 ? '1.0' : waterGlasses >= 5 ? '0.5' : '0.0') : (waterGlasses >= 7 ? '1.0' : waterGlasses >= 4 ? '0.5' : '0.0')) : '0.0', max: '1.0' },
+      { label: '😴 Sleep', val: sleepHours !== null ? `${sleepHours >= 11 ? '10+' : sleepHours}h` : '—', pts: sleepHours !== null ? (sleepHours >= 8 ? '2.0' : sleepHours === 7 ? '1.5' : sleepHours === 6 ? '1.0' : sleepHours === 5 ? '0.5' : '0.0') : '0.0', max: '2.0' },
+      { label: '🏃 Exercise', val: exerciseMins !== null ? (exerciseMins === 0 ? 'Rest day' : `${exerciseMins}m`) : '—', pts: exerciseMins !== null ? (exerciseMins >= 60 ? '2.0' : exerciseMins >= 30 ? '1.5' : exerciseMins >= 15 ? '1.0' : '0.5') : '0.0', max: '2.0' },
+      { label: '🔋 Energy', val: tiredness !== null ? `${tiredness}/11` : '—', pts: tiredness !== null ? (tiredness <= 3 ? '1.0' : tiredness <= 6 ? '0.5' : '0.0') : '0.0', max: '1.0' },
+      { label: '🌈 Mood', val: mood || '—', pts: mood === 'Thriving' ? '1.0' : mood === 'Good' ? '0.75' : mood === 'Meh' ? '0.5' : mood ? '0.25' : '0.0', max: '1.0' },
+    ];
     return (
-      <div className="min-h-screen flex items-center justify-center p-6"
-        style={{ background: 'linear-gradient(135deg, #fff0f5 0%, #fce7f3 50%, #fdf4ff 100%)' }}>
-        <div className="bg-white rounded-3xl p-10 text-center shadow-2xl border-2 border-pink-200 max-w-sm w-full animate-float-in">
-          <div className="text-7xl mb-4">🎉</div>
-          <h2 className="text-2xl font-black text-pink-600 mb-3">Yay, all done! ✨</h2>
-          <p className="text-gray-500 mb-2 text-sm leading-relaxed">
-            Your health check-in was submitted! 💌
-          </p>
-          {validationError && (
-            <p className="text-rose-500 text-xs mb-3 bg-rose-50 rounded-2xl p-3 text-center font-bold">{validationError}</p>
-          )}
-          {emailError ? (
-            <p className="text-orange-500 text-xs mb-4 bg-orange-50 rounded-2xl p-3">{emailError}</p>
-          ) : (
-            <p className="text-pink-400 text-xs mb-4">A summary has been sent to your email! 🌸</p>
-          )}
-          <p className="text-gray-400 text-xs mb-6">Remember to drink water, rest up, and be kind to yourself today 💕</p>
+      <div className="min-h-screen py-8 px-4"
+        style={{ background: 'linear-gradient(135deg, #fff0f5 0%, #fce7f3 40%, #fdf4ff 100%)' }}>
+        <div className="max-w-lg mx-auto animate-float-in">
+          {/* Medal + Score */}
+          <div className="bg-white rounded-3xl p-8 text-center shadow-xl border-2 mb-4" style={{ borderColor: medalColor }}>
+            <div className="text-8xl mb-2">{medalEmoji}</div>
+            <h2 className="text-3xl font-black mb-1" style={{ color: medalColor }}>{medalLabel}</h2>
+            <div className="flex items-center justify-center gap-3 my-4">
+              <div className="rounded-2xl px-6 py-4" style={{ background: medalBg }}>
+                <span className="text-5xl font-black" style={{ color: medalColor }}>{score}</span>
+                <span className="text-2xl font-black" style={{ color: medalColor }}>/10</span>
+              </div>
+            </div>
+            <p className="text-sm font-bold" style={{ color: '#db2777' }}>{scoreMsg}</p>
+          </div>
+
+          {/* Breakdown */}
+          <div className="bg-white rounded-3xl p-6 shadow-xl border-2 border-pink-200 mb-4">
+            <h3 className="text-base font-black mb-4" style={{ color: '#db2777' }}>📊 Score Breakdown</h3>
+            <div className="space-y-2">
+              {scoreItems.map(item => {
+                const pct = Math.min(100, (parseFloat(item.pts) / parseFloat(item.max)) * 100);
+                return (
+                  <div key={item.label}>
+                    <div className="flex justify-between text-xs font-bold mb-1" style={{ color: '#4a1530' }}>
+                      <span>{item.label} <span style={{ color: '#94a3b8' }}>({item.val})</span></span>
+                      <span style={{ color: '#db2777' }}>{item.pts}/{item.max}</span>
+                    </div>
+                    <div className="w-full rounded-full h-2" style={{ background: '#fce7f3' }}>
+                      <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: pct >= 75 ? '#34d399' : pct >= 40 ? '#facc15' : '#fb7185' }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Email note */}
+          <div className="bg-white rounded-3xl p-5 shadow-xl border-2 border-pink-200 mb-4 text-center">
+            {emailError ? (
+              <p className="text-xs font-bold" style={{ color: '#f97316' }}>{emailError}</p>
+            ) : email.trim() ? (
+              <p className="text-xs font-bold" style={{ color: '#34d399' }}>✅ A copy of your results was sent to {email}! 💌</p>
+            ) : (
+              <p className="text-xs font-bold" style={{ color: '#94a3b8' }}>💡 No email provided — your results are shown above only!</p>
+            )}
+          </div>
+
           <button
             onClick={() => { setSubmitted(false); setEmailError(''); setValidationError(''); }}
-            className="w-full py-3 rounded-2xl font-bold text-white transition-all hover:scale-105"
+            className="w-full py-4 rounded-2xl font-black text-white text-base transition-all"
             style={{ background: 'linear-gradient(135deg, #f472b6, #fb7185, #c084fc)' }}
           >
             Do Another Check-In 🌸
@@ -242,13 +350,12 @@ Made with 💕 by Health Check-In
                   required
                 />
               </Field>
-              <Field label="Your email (we'll send you a report!) 📧">
+              <Field label="Your email (optional — we'll send you a copy!) 📧">
                 <PinkInput
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="your@email.com 💌"
-                  required
+                  placeholder="your@email.com 💌 (optional)"
                 />
               </Field>
             </div>
@@ -540,7 +647,7 @@ Made with 💕 by Health Check-In
           </Card>
 
           {/* ── Suggestions ── */}
-          <Card emoji="💡" title="Got ideas for us?" subtitle="What health metrics are we missing? What should we add? 👂✨">
+          <Card emoji="💡" title="Got ideas for us? (optional)" subtitle="What health metrics are we missing? What should we add? 👂✨">
             <textarea
               value={suggestions}
               onChange={e => setSuggestions(e.target.value)}
