@@ -75,10 +75,20 @@ export default function HealthForm() {
       'Write one thing you are looking forward to',
       'Write one kind thing you did for someone',
       'Write one thing your body did for you today',
+      'Write three good things about your character',
+      'Write something you find beautiful about yourself',
+      'Write something that caught your eye today',
+      'Write a secret no one knows',
     ];
+    // Seed shuffle using today's date so it's consistent for the whole day but different each day
     const today = new Date();
-    const dayIndex = today.getDate() % tasks.length;
-    return tasks[dayIndex];
+    const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    const shuffled = [...tasks];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.abs((seed * (i + 1) * 2654435761) >>> 0) % (i + 1);
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled[0];
   };
 
   const togglePeriodDate = (dateStr: string) => {
