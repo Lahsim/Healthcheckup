@@ -697,18 +697,6 @@ Made with care by Mish · Health Check-In
             </div>
           </Card>
 
-          {/* ── Suggestions ── */}
-          <Card emoji="💡" title="Got ideas for us? (optional)" subtitle="What health metrics are we missing? What should we add? 👂✨">
-            <textarea
-              value={suggestions}
-              onChange={e => setSuggestions(e.target.value)}
-              placeholder={"e.g. 'Add a stress level question!' or 'Track period symptoms too!'"}
-              rows={4}
-              className="w-full rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none border-2"
-              style={{ background: '#fff5f7', color: '#db2777', borderColor: '#fbcfe8', fontFamily: 'var(--font-nunito), Nunito, sans-serif' }}
-            />
-          </Card>
-
           {/* ── Period Calendar ── */}
           <Card emoji="🌸" title="Period Calendar (optional)" subtitle="Track your cycle! Tap dates to mark them. Data stays in your browser. 🌸">
             <button
@@ -769,6 +757,19 @@ Made with care by Mish · Health Check-In
 
         </form>
 
+        {/* ── Suggestions (outside form, below submit) ── */}
+        <div className="mt-5">
+          <Card emoji="💡" title="Got ideas for us? (optional)" subtitle="What health metrics are we missing? What should we add? 👂✨">
+            <textarea
+              value={suggestions}
+              onChange={e => setSuggestions(e.target.value)}
+              placeholder={"e.g. 'Add a stress level question!' or 'Track period symptoms too!'"}
+              rows={4}
+              className="w-full rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none border-2"
+              style={{ background: '#fff5f7', color: '#db2777', borderColor: '#fbcfe8', fontFamily: 'var(--font-nunito), Nunito, sans-serif' }}
+            />
+          </Card>
+        </div>
 
         <p className="text-center text-xs mt-6 mb-8" style={{ color: '#f9a8d4' }}>
           Made with care by Mish · Health Check-In 🌸
