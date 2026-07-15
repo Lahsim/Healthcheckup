@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
 
 const MEALS_TODAY = [
@@ -26,10 +26,27 @@ export default function HealthForm() {
   const [mood, setMood] = useState('');
   const [vibeComment, setVibeComment] = useState('');
   const [suggestions, setSuggestions] = useState('');
+  const [periodDates, setPeriodDates] = useState<string[]>([]);
+  const [periodCalendarOpen, setPeriodCalendarOpen] = useState(false);
+  const [surpriseTaskAnswer, setSurpriseTaskAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [validationError, setValidationError] = useState('');
+
+  // Load persisted period dates from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('healthcheckup-period-dates');
+      if (stored) setPeriodDates(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('healthcheckup-period-dates', JSON.stringify(periodDates));
+    } catch {}
+  }, [periodDates]);
 
 
   const getMealHint = () => {
@@ -44,6 +61,28 @@ export default function HealthForm() {
     if (missed.includes('dinner')) return { color: 'rose' as const, text: '🍽️ No dinner yet? Go eat something warm and yummy, you deserve it! 🥰' };
     if (missed.includes('snack')) return { color: 'blue' as const, text: '🍎 No snack today — totally fine! But a little treat never hurt anyone 😉' };
     return { color: 'rose' as const, text: `😬 Missed: ${missedLabels.join(', ')}. Please take care of yourself!` };
+  };
+
+  const getSurpriseTaskForToday = () => {
+    const tasks = [
+      'Write one good thing that happened today',
+      'Write two good things about you',
+      'Write something healthy you did out of the normal',
+      'Write one thing you are grateful for today',
+      'Write one small win you had today',
+      'Write one thing you did to take care of yourself',
+      'Write one positive thought you had today',
+      'Write one thing you are looking forward to',
+      'Write one kind thing you did for someone',
+      'Write one thing your body did for you today',
+    ];
+    const today = new Date();
+    const dayIndex = today.getDate() % tasks.length;
+    return tasks[dayIndex];
+  };
+
+  const togglePeriodDate = (dateStr: string) => {
+    setPeriodDates(prev => prev.includes(dateStr) ? prev.filter(d => d !== dateStr) : [...prev, dateStr]);
   };
 
   const buildEmailBody = () => {
@@ -120,6 +159,17 @@ ${vibeComment ? `💬 "${vibeComment}"` : ''}
 ${suggestions || 'No suggestions provided'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌸  PERIOD CALENDAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${periodDates.length === 0 ? 'No dates marked' : `Marked dates:\n${periodDates.sort().join('\n')}`}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎁  SURPRISE TASK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Task: ${getSurpriseTaskForToday()}
+Answer: ${surpriseTaskAnswer}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Made with care by Mish · Health Check-In
     `.trim();
   };
@@ -138,6 +188,7 @@ Made with care by Mish · Health Check-In
     if (tiredness === null) { setValidationError('Please rate your tiredness level 🔋'); return; }
     if (!mood) { setValidationError('Please pick your mood vibe 🌈'); return; }
     if (!vibeComment.trim()) { setValidationError('Please tell us more about your vibe today! 💬'); return; }
+    if (!surpriseTaskAnswer.trim()) { setValidationError(`Please answer today's surprise task: ${getSurpriseTaskForToday()} 🎁`); return; }
 
     setSending(true);
 
@@ -658,6 +709,46 @@ Made with care by Mish · Health Check-In
             />
           </Card>
 
+          {/* ── Period Calendar ── */}
+          <Card emoji="🌸" title="Period Calendar (optional)" subtitle="Track your cycle! Tap dates to mark them. Data stays in your browser. 🌸">
+            <button
+              type="button"
+              onClick={() => setPeriodCalendarOpen(v => !v)}
+              className="w-full py-3 rounded-2xl text-sm font-black border-2 transition-all"
+              style={{ background: periodCalendarOpen ? '#fce7f3' : '#fff5f7', color: '#db2777', borderColor: '#fbcfe8' }}
+            >
+              {periodCalendarOpen ? '👆 Hide Calendar' : '📅 Open Calendar'}
+            </button>
+            {periodCalendarOpen && (
+              <PeriodCalendar
+                markedDates={periodDates}
+                onToggle={togglePeriodDate}
+              />
+            )}
+            {periodDates.length > 0 && (
+              <p className="mt-3 text-xs font-bold text-center" style={{ color: '#db2777' }}>
+                {periodDates.length} date{periodDates.length === 1 ? '' : 's'} marked 🌸
+              </p>
+            )}
+          </Card>
+
+          {/* ── Surprise Task ── */}
+          <Card emoji="🎁" title="Surprise Task" subtitle="A little prompt for you today 🌟">
+            <div className="rounded-2xl p-4 mb-3 border-2" style={{ background: '#fff5f7', borderColor: '#fbcfe8' }}>
+              <p className="text-sm font-black" style={{ color: '#db2777' }}>
+                {getSurpriseTaskForToday()} ✨
+              </p>
+            </div>
+            <textarea
+              value={surpriseTaskAnswer}
+              onChange={e => setSurpriseTaskAnswer(e.target.value)}
+              placeholder="Type your answer here..."
+              rows={3}
+              className="w-full rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none border-2"
+              style={{ background: '#fff5f7', color: '#db2777', borderColor: '#fbcfe8', fontFamily: 'var(--font-nunito), Nunito, sans-serif' }}
+            />
+          </Card>
+
           {/* ── Validation Error ── */}
           {validationError && (
             <div className="rounded-2xl p-4 text-center text-sm font-bold border-2 border-rose-200"
@@ -789,5 +880,57 @@ function Hint({ children, color }: { children: React.ReactNode; color: 'green' |
     <p className="mt-3 text-xs font-bold text-center rounded-2xl py-2 px-3" style={{ background: bg, color: text }}>
       {children}
     </p>
+  );
+}
+
+function PeriodCalendar({ markedDates, onToggle }: { markedDates: string[]; onToggle: (date: string) => void }) {
+  const [viewDate, setViewDate] = useState(new Date());
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const monthName = viewDate.toLocaleString('default', { month: 'long' });
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const blanks = Array.from({ length: firstDay }, (_, i) => i);
+
+  const handleDayClick = (day: number) => {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    onToggle(dateStr);
+  };
+
+  return (
+    <div className="mt-4 rounded-2xl p-4 border-2" style={{ background: '#fff5f7', borderColor: '#fbcfe8' }}>
+      <div className="flex justify-between items-center mb-3">
+        <button type="button" onClick={() => setViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))} className="text-lg font-black" style={{ color: '#db2777' }}>‹</button>
+        <p className="font-black text-sm" style={{ color: '#db2777' }}>{monthName} {year}</p>
+        <button type="button" onClick={() => setViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))} className="text-lg font-black" style={{ color: '#db2777' }}>›</button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold mb-2" style={{ color: '#f43f5e' }}>
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <span key={d}>{d}</span>)}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {blanks.map(b => <span key={`blank-${b}`} />)}
+        {days.map(day => {
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const marked = markedDates.includes(dateStr);
+          const isToday = dateStr === new Date().toISOString().split('T')[0];
+          return (
+            <button
+              key={day}
+              type="button"
+              onClick={() => handleDayClick(day)}
+              className="aspect-square rounded-lg text-xs font-black flex flex-col items-center justify-center transition-all"
+              style={marked
+                ? { background: '#fce7f3', border: '2px solid #db2777', color: '#db2777' }
+                : { background: '#fff', border: '2px solid #fbcfe8', color: isToday ? '#db2777' : '#4a1530' }
+              }
+            >
+              <span>{day}</span>
+              {marked && <span className="text-[10px] leading-none">🌸</span>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
